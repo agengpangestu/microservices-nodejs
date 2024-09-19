@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { VerifyErrors, Secret } from "jsonwebtoken";
+import jwt, { VerifyErrors, Secret, JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 
 export type JWTPayload = {
   id: string;
@@ -39,11 +39,17 @@ export const verifToken = (req: CustomeRequest, res: Response, next: NextFunctio
               : auth_header;
       
       jwt.verify(token, secret, (err: VerifyErrors | null, user: any) => {
-          if (err) {
+          if (err?.name === "JsonWebTokenError") {
               res.status(403).json({
                   status: false,
                   statusCode: 403,
                   message: "Token is not valid"
+              })
+          } else if (err?.name === "TokenExpiredError") {
+              res.status(403).json({
+                  status: false,
+                  statusCode: 403,
+                  message: "Token expired"
               })
           } else {
             //   if token true, return next()
